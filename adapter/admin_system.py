@@ -1047,7 +1047,7 @@ def _bot_block(data: Any) -> tuple[dict[str, Any], list[dict[str, Any]]]:
 
 # Тот же репозиторий и та же переменная, что у нашего бэкенда (UPDATE_REPO):
 # лента кабинета не зависит от того, какой бот его обслуживает.
-_CABINET_REPO = (os.environ.get("UPDATE_REPO") or "velamaker/remnashop-cabinet").strip().strip("/")
+_CABINET_REPO = (os.environ.get("UPDATE_REPO") or "chama-development/chami-cabinet").strip().strip("/")
 
 # Где искать каталог кабинета, если его пробросили адаптеру (см. шапку раздела).
 # Пусто в обоих местах — значит не пробросили, это норма.
