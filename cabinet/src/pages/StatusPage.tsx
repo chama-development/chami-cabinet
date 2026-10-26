@@ -2,17 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Activity, CheckCircle2, AlertTriangle, ArrowLeft } from "lucide-react";
 import { statusApi, type StatusResponse, type UptimeDay } from "@/api/status";
-import { useNodePings } from "@/lib/ping";
 import { useBranding } from "@/contexts/BrandingContext";
 import { Flag } from "@/components/Flag";
 import { useT } from "@/i18n/I18nContext";
-
-// Цвет пинг-бейджа: зелёный <100 мс, жёлтый <250 мс, красный выше.
-export function pingClass(ms: number): string {
-  if (ms < 100) return "bg-success/10 text-success";
-  if (ms < 250) return "bg-warning/10 text-warning";
-  return "bg-danger/10 text-danger";
-}
 
 // Цвет «свечки» аптайма за день: зелёный ≥99%, жёлтый ≥95%, красный ниже.
 function uptimeBarClass(pct: number): string {
@@ -62,7 +54,6 @@ export default function StatusPage() {
   }, []);
 
   const allOk = data?.all_operational ?? true;
-  const pings = useNodePings(data?.nodes ?? []);
 
   // Публичная страница (до входа) — не называем сервис впрямую: убираем суффикс бренда.
   const bParts = (brandName || "").trim().split(/\s+/);
@@ -113,11 +104,6 @@ export default function StatusPage() {
                     <div className="flex items-center gap-3">
                       {n.country_code && <Flag code={n.country_code} className="h-4 w-6" />}
                       <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">{n.name}</span>
-                      {n.online && n.host && pings[n.host] != null && (
-                        <span className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${pingClass(pings[n.host]!)}`}>
-                          {pings[n.host]} {t("status.ms")}
-                        </span>
-                      )}
                       <span className={`flex items-center gap-1.5 text-xs font-medium ${n.online ? "text-success" : "text-danger"}`}>
                         <span className={`h-2 w-2 rounded-full ${n.online ? "bg-success" : "bg-danger"}`} />
                         {n.online ? t("info.online") : t("info.offline")}
