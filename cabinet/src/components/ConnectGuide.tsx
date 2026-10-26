@@ -183,16 +183,21 @@ export function ConnectGuide({ subUrl }: { subUrl: string }) {
         </p>
       </div>
 
-      {/* Выбор платформы */}
+      {/* Выбор платформы. Цвет меняется без перехода (transition-none гасит и
+          глобальный дефолт для button): при быстрых кликах старая кнопка
+          успевала «догорать» рядом с новой. Рамка есть у всех кнопок, у
+          выбранной она прозрачная — иначе размер кнопок прыгал на 2px. */}
       <div className="mt-4 flex flex-wrap gap-1.5">
         {PLATFORMS.map((p) => (
           <button
             key={p.id}
+            type="button"
+            aria-pressed={platform === p.id}
             onClick={() => setPlatform(p.id)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-none ${
               platform === p.id
-                ? "bg-accent text-accent-fg"
-                : "border border-[var(--border)] bg-bg-raised text-fg-muted hover:text-fg"
+                ? "border-transparent bg-accent text-accent-fg"
+                : "border-[var(--border)] bg-bg-raised text-fg-muted hover:text-fg"
             }`}
           >
             {p.label}
