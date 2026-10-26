@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Activity, CheckCircle2 } from "lucide-react";
+import { Activity } from "lucide-react";
 import { statusApi, type StatusResponse } from "@/api/status";
 import { Flag } from "@/components/Flag";
 import { useT } from "@/i18n/I18nContext";
@@ -27,11 +27,11 @@ export function ServerStatusCard() {
   // Пока грузится или нет данных о нодах — блок не показываем (не мозолим глаза).
   if (!loaded || !data || data.nodes.length === 0) return null;
 
-  const allOk = data.all_operational;
-
   return (
     <div className="surface p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
+      {/* Общей надписи «все работают / часть недоступна» нет: состояние каждого
+          сервера видно по точке в его строке, сводка — «N / M онлайн». */}
+      <div className="mb-4 flex items-center gap-3">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent-subtle text-accent">
             <Activity className="h-4 w-4" />
@@ -43,14 +43,6 @@ export function ServerStatusCard() {
             </p>
           </div>
         </div>
-        {/* «Часть серверов недоступны» не пишем: какой именно лежит, и так видно по
-            красной точке в строке, а общая тревожная надпись пугала зря. */}
-        {allOk && (
-          <span className="flex items-center gap-1.5 text-xs font-medium text-success">
-            <CheckCircle2 className="h-4 w-4" />
-            {t("info.allOk")}
-          </span>
-        )}
       </div>
 
       <div className="space-y-1.5">
