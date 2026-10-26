@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Globe2, Gauge, Infinity as InfinityIcon, Landmark } from "lucide-react";
+import { Globe2, Gauge, Landmark } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { BrandWordmark } from "@/components/BrandWordmark";
 import { ThemeSwitcher } from "@/components/ui/ThemeSwitcher";
@@ -17,7 +17,6 @@ export default function LandingPage() {
 
   const features = [
     { icon: Gauge, title: t("landing.f1.title"), text: t("landing.f1.text") },
-    { icon: InfinityIcon, title: t("landing.f2.title"), text: t("landing.f2.text") },
     { icon: Landmark, title: t("landing.f3.title"), text: t("landing.f3.text") },
     { icon: Globe2, title: t("landing.f4.title"), text: t("landing.f4.text") },
   ];
@@ -67,7 +66,7 @@ export default function LandingPage() {
         </div>
 
         {/* Преимущества */}
-        <div className="mt-14 grid w-full grid-cols-1 gap-3 text-left sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-14 grid w-full grid-cols-1 gap-3 text-left md:grid-cols-3">
           {features.map(({ icon: Icon, title, text }) => (
             <div
               key={title}
