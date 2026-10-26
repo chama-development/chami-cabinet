@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Activity, CheckCircle2, AlertTriangle } from "lucide-react";
 import { statusApi, type StatusResponse } from "@/api/status";
-import { useNodePings, pingClass } from "@/lib/ping";
 import { Flag } from "@/components/Flag";
 import { useT } from "@/i18n/I18nContext";
 
 // Компактный блок статуса серверов для кабинета — те же данные, что на публичной
-// странице /status (включая пинг). Автообновление каждые 30 с.
+// странице /status. Только «работает / недоступен»: пинг из браузера до VPN-ноды
+// получался в 2–4 раза выше реального и расходился с приложением. Автообновление каждые 30 с.
 export function ServerStatusCard() {
   const t = useT();
   const [data, setData] = useState<StatusResponse | null>(null);
@@ -24,26 +24,10 @@ export function ServerStatusCard() {
     return () => { alive = false; clearInterval(id); };
   }, []);
 
-  const pings = useNodePings(data?.nodes ?? []);
-
   // Пока грузится или нет данных о нодах — блок не показываем (не мозолим глаза).
   if (!loaded || !data || data.nodes.length === 0) return null;
 
   const allOk = data.all_operational;
-
-  // Самая быстрая онлайн-нода (по клиентскому пингу) — помечаем «Рекомендуем».
-  // Сравниваем по ИНДЕКСУ строки, а не по адресу: если у нескольких серверов один
-  // и тот же адрес (типовая настройка — общий домен-фронт на все страны), метка
-  // по адресу загоралась сразу на всех строках.
-  let bestIndex = -1;
-  let bestMs = Infinity;
-  data.nodes.forEach((n, i) => {
-    const p = n.host ? pings[n.host] ?? null : null;
-    if (n.online && p != null && p < bestMs) {
-      bestMs = p;
-      bestIndex = i;
-    }
-  });
 
   return (
     <div className="surface p-5">
@@ -70,17 +54,7 @@ export function ServerStatusCard() {
           <div key={i} className="flex items-center gap-3 rounded-xl bg-bg-subtle px-3.5 py-2.5">
             {n.country_code && <Flag code={n.country_code} className="h-4 w-6" />}
             <span className="min-w-0 truncate text-sm font-medium text-fg">{n.name}</span>
-            {i === bestIndex && (
-              <span className="flex-shrink-0 rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                {t("status.recommended")}
-              </span>
-            )}
             <span className="flex-1" />
-            {n.online && n.host && pings[n.host] != null && (
-              <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${pingClass(pings[n.host]!)}`}>
-                {pings[n.host]} {t("status.ms")}
-              </span>
-            )}
             <span className={`flex items-center gap-1.5 text-xs font-medium ${n.online ? "text-success" : "text-danger"}`}>
               <span className={`h-2 w-2 rounded-full ${n.online ? "bg-success" : "bg-danger"}`} />
               {n.online ? t("info.online") : t("info.offline")}
