@@ -28,7 +28,8 @@ exit 0
 SH
 cat > "$BIN/curl" <<'SH'
 #!/usr/bin/env bash
-printf 'curl %s\n' "$*" >> "$HARNESS_LOG"
+# Подпись многострочная: переводы строк — в «\n», чтобы вызов оставался одной строкой журнала.
+args="$*"; printf 'curl %s\n' "${args//$'\n'/\\n}" >> "$HARNESS_LOG"
 printf 'stdin %s\n' "$(cat)" >> "$HARNESS_LOG"
 exit "${FAKE_CURL_RC:-0}"
 SH
@@ -164,6 +165,9 @@ case_ "текстовые поля — --form-string: «@канал» не чи�
 run BACKUP_PASSPHRASE=secret BOT_TOKEN=123:T BACKUP_OFFSITE_TELEGRAM_CHAT_ID=@mychannel
 grep '^curl' "$HARNESS_LOG" | grep -q -- '--form-string chat_id=@mychannel' || fail "chat_id не через --form-string"
 grep '^curl' "$HARNESS_LOG" | grep -q -- '--form-string caption=' || fail "подпись не через --form-string"
+grep '^curl' "$HARNESS_LOG" | grep -q -- '--form-string parse_mode=HTML' || fail "подпись без разметки HTML"
+grep '^curl' "$HARNESS_LOG" | grep -q 'Резервная копия базы' || fail "в подписи нет заголовка"
+grep '^curl' "$HARNESS_LOG" | grep -qE '[0-9]+ (Б|КБ|МБ)' || fail "размер в подписи не в Б/КБ/МБ"
 grep '^curl' "$HARNESS_LOG" | grep -qE -- '-F document=@.*\.sql\.gz\.enc' || fail "файл должен уходить через -F"
 
 case_ "«owner» без BOT_OWNER_ID — бэкап цел, предупреждение, без падения на set -u"
