@@ -157,10 +157,14 @@ async def my_servers(
     """Серверы для блока «Статус сервиса» в кабинете вошедшего пользователя.
 
     Что показываем зависит от состояния пользователя:
-      • сотрудник (админ/овнер) — ВСЕ реальные хосты (Poland H/WS/X…), с адресами;
-      • активная подписка — свои хосты (по сквадам), заглушки скрыты, с адресами;
+      • сотрудник (админ/овнер) — ВСЕ реальные хосты (Poland H/WS/X…);
+      • активная подписка — свои хосты (по сквадам), заглушки скрыты;
       • подписка кончилась — хосты-заглушки (ПОДПИСКА ЗАКОНЧИЛАСЬ/Продлите/Резерв…);
-      • нет подписки (новый) — ноды/страны (что серверы есть), без адресов.
+      • нет подписки (новый) — ноды/страны (что серверы есть).
+
+    Адресов хостов и нод ответ НЕ содержит никому: кабинету они были нужны только
+    для замера пинга из браузера, а его убрали. Адрес ноды — то, по чему её находят
+    и блокируют, раздавать его каждому вошедшему незачем.
 
     Хост-заглушки определяются по словам из настройки service_keywords (админка).
     Связи надёжны (accessible-nodes бывает пустым даже у активных):
@@ -186,7 +190,7 @@ async def my_servers(
         return empty
     visible = visible_node_ids(cfg)  # пусто = все
     inbound_nodes: dict[str, list[tuple[str, bool]]] = {}
-    node_items: list[dict] = []  # ноды/страны без адресов — для новых юзеров и фолбэка
+    node_items: list[dict] = []  # ноды/страны — для новых юзеров и фолбэка
     for n in getattr(nres, "root", nres) or []:
         if getattr(n, "is_disabled", False):
             continue
@@ -199,7 +203,6 @@ async def my_servers(
             "name": getattr(n, "name", "") or "",
             "country_code": cc,
             "online": conn,
-            "host": "",  # ноды показываем без адреса (приватно)
         })
         cp = getattr(n, "config_profile", None)
         for inb in getattr(cp, "active_inbounds", None) or []:
@@ -222,12 +225,12 @@ async def my_servers(
     except Exception:
         hlist = []
 
-    def build_host(h, reveal: bool, include_hidden: bool = False) -> dict | None:
+    def build_host(h, include_hidden: bool = False) -> dict | None:
         if getattr(h, "is_disabled", False):
             return None
         # Скрытые хосты (isHidden) — члены балансира/каскада: в приложении и подписке
-        # их не видно, значит и обычному юзеру в кабинете нельзя (иначе утекает адрес
-        # скрытого хоста, по которому фронт пингует). Виден только сам балансир.
+        # их не видно, значит и обычному юзеру в кабинете нельзя. Виден только сам
+        # балансир.
         # Сотруднику (include_hidden) оставляем полный список — у него есть на это право.
         if getattr(h, "is_hidden", False) and not include_hidden:
             return None
@@ -245,16 +248,15 @@ async def my_servers(
             "name": _clean_remark(getattr(h, "remark", "") or ""),
             "country_code": cc,
             "online": online,
-            "host": (getattr(h, "address", "") or "") if reveal else "",
             "_inbound": iu,
             "_service": _is_service_host(getattr(h, "remark", "") or "", keywords),
         }
 
-    # --- Сотрудник: все РЕАЛЬНЫЕ хосты с адресами (заглушки не нужны). ---
+    # --- Сотрудник: все РЕАЛЬНЫЕ хосты (заглушки не нужны). ---
     if is_staff:
         items = []
         for h in hlist:
-            b = build_host(h, reveal=True, include_hidden=True)
+            b = build_host(h, include_hidden=True)
             if b and not b["_service"]:
                 items.append({k: v for k, v in b.items() if not k.startswith("_")})
         return _finalize(items)
@@ -263,7 +265,7 @@ async def my_servers(
     has_sub, active = await _current_sub_state(session, user.id)
 
     if active:
-        # Свои хосты по подписке (сквады), заглушки скрыты, адреса отдаём (это его сеть).
+        # Свои хосты по подписке (сквады), заглушки скрыты.
         # inbound -> сквады ЮЗЕРА, которые этот inbound дают. Нужна именно карта, а не
         # плоское множество: панель прячет хост от конкретных сквадов
         # (host.excludedInternalSquads), и хост виден, только если хотя бы один сквад,
@@ -295,7 +297,7 @@ async def my_servers(
             return _finalize(node_items)
         items = []
         for h in hlist:
-            b = build_host(h, reveal=True)
+            b = build_host(h)
             if not b or b["_service"]:
                 continue
             if inbound_squads is not None:
@@ -314,7 +316,7 @@ async def my_servers(
         # Подписка кончилась → показываем хосты-заглушки (продление/резерв и т.п.).
         items = []
         for h in hlist:
-            b = build_host(h, reveal=True)
+            b = build_host(h)
             if b and b["_service"]:
                 items.append({k: v for k, v in b.items() if not k.startswith("_")})
         return _finalize(items or node_items)
