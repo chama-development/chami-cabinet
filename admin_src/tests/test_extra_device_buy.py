@@ -31,7 +31,10 @@ endpoint = importlib.import_module("src.web.endpoints.public.extra_device")
 
 from src.core.enums import Currency, PaymentGatewayType  # noqa: E402
 
-NOW = datetime(2026, 9, 18, 12, 0, tzinfo=timezone.utc)
+# «Сейчас» — от настоящих часов, а не зашитой датой: часть кода под тестом берёт
+# текущее время сама, и с фиксированной датой слоты «истекали» через 20 дней после
+# написания теста — он начинал падать сам по себе.
+NOW = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
 DAY = 86400
 USER_ID = 7
 SUB_ID = 100
