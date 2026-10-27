@@ -2,10 +2,14 @@ name: Auto-tag from VERSION
 
 # Когда в main меняется файл VERSION — автоматически создаём git-тег vX.Y.Z.
 # Бейдж версии в README (github/v/tag) подтянет его сам. Ручных шагов не нужно.
+# Ручной запуск — на случай, когда VERSION поменялся, а запуск по push не случился
+# (так было с v1.6.1: Actions в форке включили уже после слияния). Тег берётся из
+# VERSION выбранной ветки; существующий тег не трогаем.
 on:
   push:
     branches: [main]
     paths: ["VERSION"]
+  workflow_dispatch:
 
 permissions:
   contents: write
