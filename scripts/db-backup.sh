@@ -95,7 +95,23 @@ if [ -n "${BACKUP_OFFSITE_TELEGRAM_CHAT_ID:-}" ]; then
         echo "$(date -Is) WARN: offsite telegram пропущен — дамп ${SIZE} B больше лимита бота" >&2
     else
         SUM="$(cat "${OUT}.sha256" 2>/dev/null || true)"
-        CAPTION="Бэкап базы $(date +%F\ %H:%M), ${SIZE} B, sha256 ${SUM:0:16}…"
+        # Подпись читает человек в Telegram: время — в его поясе (BACKUP_TZ, по
+        # умолчанию Москва; сервер обычно в UTC), размер — в КБ/МБ, а не в байтах.
+        # HTML-разметка безопасна: всё в подписи — наши цифры, хэш и имя хоста.
+        WHEN="$(TZ="${BACKUP_TZ:-Europe/Moscow}" date '+%d.%m.%Y, %H:%M %Z')"
+        HUMAN_SIZE="$(awk -v b="$SIZE" 'BEGIN {
+            if (b < 1024) printf "%d Б", b
+            else if (b < 1048576) printf "%.0f КБ", b / 1024
+            else { s = sprintf("%.1f МБ", b / 1048576); sub(/\./, ",", s); printf "%s", s }
+        }')"
+        CAPTION="🗄 <b>Резервная копия базы</b>
+
+📅 ${WHEN}
+📦 ${HUMAN_SIZE}
+🖥 $(hostname -s 2>/dev/null || echo сервер)
+🔒 Зашифрована — откроется паролем, сохранённым при настройке
+
+<code>sha256 ${SUM:0:16}…</code>"
         # --form-string для текстовых полей: у -F значение, начатое с @ или <, curl
         # читает как имя файла («@канал» в chat_id ушёл бы чтением файла «канал»).
         if {
@@ -106,6 +122,7 @@ if [ -n "${BACKUP_OFFSITE_TELEGRAM_CHAT_ID:-}" ]; then
         } | curl -fsS --max-time 120 -K - \
                 --form-string "chat_id=${BACKUP_OFFSITE_TELEGRAM_CHAT_ID}" \
                 --form-string "caption=${CAPTION}" \
+                --form-string "parse_mode=HTML" \
                 -F "document=@${OUT}" >/dev/null 2>&1; then
             echo "$(date -Is) OK: offsite telegram → ${BACKUP_OFFSITE_TELEGRAM_CHAT_ID}"
         else
