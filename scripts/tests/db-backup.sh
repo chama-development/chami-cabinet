@@ -57,6 +57,13 @@ verify() {
 }
 : > "$TMP/env"
 
+case_ "скрипты для крона исполняемые — крон зовёт их напрямую, не через bash"
+# db-restore-verify.sh лежал в git без права запуска: ежемесячная проверка
+# восстановления из крона падала с «Permission denied» и не проходила ни разу.
+for f in db-backup.sh db-restore-verify.sh; do
+  [ "$(git -C "$ROOT" ls-files -s "scripts/$f" | cut -c1-6)" = 100755 ] || fail "scripts/$f в git без права запуска"
+done
+
 case_ "без отправки наружу — curl не зовётся"
 run BACKUP_PASSPHRASE=secret
 [ "$RC" = 0 ] || fail "код $RC"
