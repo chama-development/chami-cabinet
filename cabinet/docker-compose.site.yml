@@ -42,7 +42,7 @@ services:
       # дефолт нужен для .env, собранных до появления выбора бэкенда.
       API_PATH_PREFIX: "${API_PATH_PREFIX:-/api/v1/public/}"
     ports:
-      - "127.0.0.1:${CABINET_PORT:-5002}:80"
+      - "127.0.0.1:${CABINET_PORT:-5002}:8080"
     volumes:
       # Тот же envsubst-шаблон, что и в одно-серверной установке. Правки конфига
       # без пересборки образа; после правки — up -d --force-recreate cabinet.

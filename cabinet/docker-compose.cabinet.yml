@@ -21,7 +21,7 @@ services:
       # Значения задаёт install.sh; вручную — CABINET_BACKEND в .env.
       API_PATH_PREFIX: "${API_PATH_PREFIX:-/api/v1/public/}"
     ports:
-      - "127.0.0.1:${CABINET_PORT:-5002}:80"
+      - "127.0.0.1:${CABINET_PORT:-5002}:8080"
     volumes:
       # nginx.conf — envsubst-шаблон, авторитетен из исходника (правки не требуют
       # пересборки образа). Монтируется в templates/, entrypoint подставит ${API_*}

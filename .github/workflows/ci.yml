@@ -34,6 +34,10 @@ jobs:
         run: npm run build
       - name: Unit tests
         run: npm test --if-present
+      - name: Production frontend container (non-root + healthcheck)
+        run: |
+          docker build -t remnashop-cabinet:ci .
+          bash ../scripts/tests/container-security.sh frontend remnashop-cabinet:ci
       - name: Dependency audit (high+)
         run: npm audit --audit-level=high
         continue-on-error: true  # видимость, не блокируем (транзитивные фиксы бывают отложены)
@@ -109,6 +113,12 @@ jobs:
           APP_API_KEY=ci-api-key
           APP_JWT_SECRET=ci-jwt-secret
           ENV
+
+      - name: Production backend container (non-root + data migration + healthcheck)
+        run: |
+          docker compose --env-file ci.env -f docker-compose.yml config --quiet
+          docker build -t remnashop-runtime-ci .
+          bash scripts/tests/container-security.sh backend remnashop-runtime-ci
 
       # Схема — настоящими миграциями бота (база + overlay), как при старте
       # контейнера. Часть тестов нарочно сверяется с РЕАЛЬНОЙ схемой, а не со своей

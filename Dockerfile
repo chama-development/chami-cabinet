@@ -95,12 +95,22 @@ COPY CHANGELOG.md /opt/remnashop/CHANGELOG.md
 # отдаёт кабинет — см. admin_src/overlay_patches/entrypoint.py. Раньше здесь стоял
 # sed по строке запуска, то есть сборка меняла файл бота.
 
-# CI needs an installer for isolated pytest dependencies. Keep that tooling in an
-# explicit test target, never in the default production image.
+# Only application data is writable. Source code and the venv remain root-owned.
+RUN addgroup -S -g 10001 remnashop \
+ && adduser -S -D -u 10001 -G remnashop -h /home/remnashop remnashop \
+ && mkdir -p /opt/remnashop/assets /opt/remnashop/logs /opt/remnashop/backups \
+ && chown -R 10001:10001 /opt/remnashop/assets /opt/remnashop/logs /opt/remnashop/backups
+ENV HOME=/home/remnashop
+ENV PYTHONDONTWRITEBYTECODE=1
+COPY scripts/prepare-runtime-dirs.py scripts/container-healthcheck.py /opt/remnashop/scripts/
+
+# CI needs an installer for isolated pytest dependencies, under the same UID as prod.
 FROM overlay-build AS test
+USER remnashop:remnashop
 
 FROM overlay-build AS runtime
-# pip bundles its own urllib3/msgpack/setuptools copies; updating application
-# packages cannot patch those private copies. The running application needs no
-# package installer, so remove it (and its bundled libraries) after the build.
+# Remove the installer and its vulnerable private dependency copies from production.
 RUN /usr/local/bin/python -m pip uninstall -y pip
+USER remnashop:remnashop
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
+  CMD ["python", "/opt/remnashop/scripts/container-healthcheck.py"]
