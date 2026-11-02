@@ -107,7 +107,8 @@ ENV API_PATH_PREFIX=/api/v1/public/
 
 # Run nginx, template expansion and branding hooks without root. The only
 # writable locations are generated static assets, config and nginx runtime files.
-RUN sed -i '/^user /d; s#pid */var/run/nginx.pid;#pid /tmp/nginx.pid;#' /etc/nginx/nginx.conf \
+RUN sed -i '/^user /d; s#^[[:space:]]*pid[[:space:]].*;#pid /tmp/nginx.pid;#' /etc/nginx/nginx.conf \
+ && grep -q '^pid /tmp/nginx.pid;' /etc/nginx/nginx.conf \
  && chown -R nginx:nginx /usr/share/nginx/html /etc/nginx/conf.d /var/cache/nginx
 USER nginx
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
