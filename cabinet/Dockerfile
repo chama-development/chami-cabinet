@@ -73,9 +73,9 @@ ENV NODE_OPTIONS=--max-old-space-size=1024
 RUN nice -n 19 npm run build
 
 # ---- Serve stage ----
-FROM nginx:1.27-alpine
+FROM nginx:stable-alpine
 # imagemagick — генерация PWA-иконок из логотипа бренда при старте (45-pwa-icons.sh).
-RUN apk add --no-cache imagemagick
+RUN apk upgrade --no-cache && apk add --no-cache imagemagick
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # nginx.conf — это envsubst-ШАБЛОН. Кладём в templates/, чтобы официальный
@@ -105,5 +105,13 @@ ENV API_HOST_HEADER=\$host
 # кабинет не стартует вовсе. Значение по умолчанию = наш бот.
 ENV API_PATH_PREFIX=/api/v1/public/
 
-EXPOSE 80
+# Run nginx, template expansion and branding hooks without root. The only
+# writable locations are generated static assets, config and nginx runtime files.
+RUN sed -i '/^user /d; s#^[[:space:]]*pid[[:space:]].*;#pid /tmp/nginx.pid;#' /etc/nginx/nginx.conf \
+ && grep -q '^pid /tmp/nginx.pid;' /etc/nginx/nginx.conf \
+ && chown -R nginx:nginx /usr/share/nginx/html /etc/nginx/conf.d /var/cache/nginx
+USER nginx
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
+  CMD wget -q -T 3 -O /dev/null http://127.0.0.1:8080/healthz || exit 1
+EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]

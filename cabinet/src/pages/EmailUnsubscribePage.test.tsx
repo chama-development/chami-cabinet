@@ -24,7 +24,8 @@ const { EmailOptoutPanel } = await import("./EmailUnsubscribePage");
 
 /** Русский текст ключа — тот же, что увидит человек (язык задан в beforeEach). */
 const ru = (key: string) => translate(key, {}, "ru");
-const TOKEN = "42.0123456789abcdef0123456789abcdef";
+// Deliberately fake: the API is mocked throughout this test.
+const TOKEN = "42." + "0".repeat(32);
 
 function open(token = TOKEN) {
   return render(

@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/format";
 import { formatAdminMoney } from "@/lib/adminMoney";
 import { pluralFor } from "@/lib/pluralRu";
 import { useI18n, useT } from "@/i18n/I18nContext";
+import { htmlPreviewText } from "@/lib/htmlPreview";
 import { translate } from "@/i18n/translate";
 
 // Горизонт предпросмотра и период итогов — короткими списками: админу нужен ответ
@@ -206,7 +207,7 @@ function PreviewCard() {
           <div>
             <p className="mb-1 text-fg-subtle">{t("adm.renewaldiscount.message_preview")}</p>
             <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg bg-bg p-3 text-[11px] leading-relaxed text-fg">
-              {data.message.telegram_html.replace(/<[^>]+>/g, "")}
+              {htmlPreviewText(data.message.telegram_html)}
             </pre>
           </div>
         </div>

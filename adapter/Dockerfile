@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir \
       annotated-doc==0.0.5 \
       annotated-types==0.8.0 \
       anyio==4.14.2 \
-      certifi==2026.7.22 \
+      certifi==2026.10.23 \
       click==8.4.2 \
       h11==0.16.0 \
       httpcore==1.0.9 \

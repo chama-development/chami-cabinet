@@ -232,6 +232,10 @@ def application() -> FastAPI:
     app = _base_application()
     container: AsyncContainer = app.state.dishka_container
 
+    @app.get("/healthz", include_in_schema=False)
+    async def healthz() -> dict[str, str]:
+        return {"status": "ok"}
+
     # ── overlay: добавляем роуты поверх нетронутого base app ──
     app.include_router(admin_router)
     if AppConfig.get().web_enabled:

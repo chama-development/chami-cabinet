@@ -5,6 +5,7 @@ import { settingsAdminApi, topupAdminApi, morningSummaryAdminApi, trialDiscountA
 import { ApiError } from "@/types/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/i18n/I18nContext";
+import { htmlPreviewText } from "@/lib/htmlPreview";
 import { translate } from "@/i18n/translate";
 
 // Крупный блок настроек: заголовок с иконкой + вложенные секции (карточки).
@@ -1748,9 +1749,7 @@ export function TrialDiscountCard() {
               )}
               {dry.previews.find((p) => p.would_send)?.text && (
                 <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg bg-bg-subtle p-3 text-[11px] leading-relaxed text-fg">
-                  {dry.previews
-                    .find((p) => p.would_send)!
-                    .text!.replace(/<[^>]+>/g, "")}
+                  {htmlPreviewText(dry.previews.find((p) => p.would_send)!.text!)}
                 </pre>
               )}
             </div>

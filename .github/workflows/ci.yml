@@ -34,6 +34,10 @@ jobs:
         run: npm run build
       - name: Unit tests
         run: npm test --if-present
+      - name: Production frontend container (non-root + healthcheck)
+        run: |
+          docker build -t remnashop-cabinet:ci .
+          bash ../scripts/tests/container-security.sh frontend remnashop-cabinet:ci
       - name: Dependency audit (high+)
         run: npm audit --audit-level=high
         continue-on-error: true  # видимость, не блокируем (транзитивные фиксы бывают отложены)
@@ -82,7 +86,7 @@ jobs:
       # (COPY admin_src/src поверх ghcr.io/snoups/remnashop). Без сборки их
       # неоткуда взять, поэтому гоняем внутри образа, как и локально.
       - name: Собрать образ
-        run: docker build -t remnashop-ci .
+        run: docker build --target test -t remnashop-ci .
 
       # Значения ЗАВЕДОМО фальшивые и секретами не являются: AppConfig валидирует
       # их на импорте, и без них три теста падают ещё на сборе.
@@ -109,6 +113,13 @@ jobs:
           APP_API_KEY=ci-api-key
           APP_JWT_SECRET=ci-jwt-secret
           ENV
+
+      - name: Production backend container (non-root + data migration + healthcheck)
+        run: |
+          cp ci.env .env
+          docker compose --env-file ci.env -f docker-compose.yml config --quiet
+          docker build -t remnashop-runtime-ci .
+          bash scripts/tests/container-security.sh backend remnashop-runtime-ci
 
       # Схема — настоящими миграциями бота (база + overlay), как при старте
       # контейнера. Часть тестов нарочно сверяется с РЕАЛЬНОЙ схемой, а не со своей
