@@ -116,6 +116,7 @@ jobs:
 
       - name: Production backend container (non-root + data migration + healthcheck)
         run: |
+          cp ci.env .env
           docker compose --env-file ci.env -f docker-compose.yml config --quiet
           docker build -t remnashop-runtime-ci .
           bash scripts/tests/container-security.sh backend remnashop-runtime-ci
