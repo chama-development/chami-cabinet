@@ -552,9 +552,11 @@ async def test_reserve_keeps_its_safety_gigabyte(engine):
         await conn.execute(
             sa_text(
                 "INSERT INTO reserve_grants (user_id, ended, reserve_expire_at) "
-                "VALUES (:u, false, :e)"
+                # The reserve SQL uses PostgreSQL now(), not the simulated NOW.
+                # Keep this fixture active even after the fixed September clock.
+                "VALUES (:u, false, now() + interval '40 days')"
             ),
-            {"u": uid, "e": NOW + timedelta(days=40)},
+            {"u": uid},
         )
         await conn.execute(sa_text("UPDATE subscriptions SET traffic_limit = 1 WHERE user_id = :u"), {"u": uid})
 

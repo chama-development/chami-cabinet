@@ -18,7 +18,10 @@ export default tseslint.config(
       "react-refresh": reactRefresh,
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
+      // Keep the existing Hooks checks while updating the plugin for ESLint 10.
+      // React Compiler adoption is separate from this dependency security update.
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
       // Отключено осознанно: правило — только про dev-HMR (Fast Refresh), на прод не
       // влияет. Наши контексты (Auth/Theme/Branding/I18n) по идиоматичному паттерну
       // React экспортят Provider + свой хук из одного файла; удовлетворить правило
