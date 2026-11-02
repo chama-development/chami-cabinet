@@ -15,3 +15,7 @@
 # Почему это вообще вылезло только сейчас: на пуше gitleaks смотрит лишь новые
 # коммиты, а по расписанию — всю историю. Прогон по расписанию 14.09 и упал.
 402dbc1cd5d421973a4d3fbb976e5e3531fb30b0:.github/workflows/ci.yml:generic-api-key:60
+
+# Mock unsubscribe token (user 42 + repeating hexadecimal fixture), not a secret.
+# Scheduled scans include the original commit even after the fixture changes.
+fbe0b23756483abe10daa1e37e1e7e7aa9b63920:cabinet/src/pages/EmailUnsubscribePage.test.tsx:generic-api-key:27

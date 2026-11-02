@@ -41,11 +41,16 @@
     // приложений + http(s)/tg. javascript:/data:/blob:/vbscript: и любой не-allowlist —
     // отвергаем (иначе клик по кнопке исполнил бы JS в origin кабинета с куками юзера).
     var ALLOWED = /^(https?|tg|happ|hiddify|v2raytun|v2rayng|v2box|nekobox|nekoray|streisand|sub|karing|sing-box|clash|clashmeta|shadowrocket|foxray|sfi|sfa|fair|incy):/i;
-    if (link && ALLOWED.test(link)) {
+    var target;
+    try { target = new URL(link); } catch (e) { target = null; }
+    // Validate the browser-parsed protocol, then navigate using the parsed URL.
+    // Web URLs stay on this cabinet: this endpoint is not an external redirector.
+    if (target && ALLOWED.test(target.protocol) &&
+        (target.protocol !== "http:" && target.protocol !== "https:" || target.origin === location.origin)) {
       var a = document.getElementById("open");
-      a.setAttribute("href", link);
-      // Мы уже во внешнем браузере — здесь кастомная схема отдаётся ОС и приложение открывается.
-      setTimeout(function () { try { location.href = link; } catch (e) {} }, 60);
+      a.setAttribute("href", target.href);
+      // Custom schemes are handed to the OS to open the selected VPN app.
+      setTimeout(function () { try { location.href = target.href; } catch (e) {} }, 60);
     }
   </script>
 </body>

@@ -75,3 +75,38 @@ describe("схемы приложений в странице «Открывае
     }
   });
 });
+
+// Run the static page script with navigation and timers isolated from the browser.
+function runConnect(link: string) {
+  const anchor = document.createElement("a");
+  anchor.href = "#";
+  const location = {
+    hash: `#${encodeURIComponent(link)}`,
+    origin: "https://cabinet.example",
+    href: "https://cabinet.example/connect.html",
+  };
+  const script = connectHtml.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+  if (!script) throw new Error("missing connect script");
+  const run = new Function("location", "document", "setTimeout", script);
+  run(location, { getElementById: () => anchor }, (callback: () => void) => callback());
+  return { href: anchor.getAttribute("href"), destination: location.href };
+}
+
+describe("connect page URL validation", () => {
+  it.each([
+    "javascript:alert(1)", "java\nscript:alert(1)", "data:text/html,<script>alert(1)</script>",
+    "//evil.example", "https://evil.example", "https://cabinet.example@evil.example/",
+    "file:///etc/passwd", "blob:https://cabinet.example/id", "%6aavascript:alert(1)",
+  ])("rejects unsafe or external web URL %s", (link) => {
+    expect(runConnect(link)).toEqual({ href: "#", destination: "https://cabinet.example/connect.html" });
+  });
+
+  it("keeps same-origin web links working", () => {
+    expect(runConnect("https://cabinet.example/help").destination).toBe("https://cabinet.example/help");
+  });
+
+  it.each(APPS)("opens the $id app", (app) => {
+    const link = app.deepLink("https://cabinet.example/c/subscription");
+    expect(runConnect(link).destination).toBe(new URL(link).href);
+  });
+});
