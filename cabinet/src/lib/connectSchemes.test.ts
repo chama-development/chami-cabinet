@@ -85,7 +85,8 @@ function runConnect(link: string) {
     origin: "https://cabinet.example",
     href: "https://cabinet.example/connect.html",
   };
-  const script = connectHtml.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+  const script = new DOMParser().parseFromString(connectHtml, "text/html")
+    .querySelector("script")?.textContent;
   if (!script) throw new Error("missing connect script");
   const run = new Function("location", "document", "setTimeout", script);
   run(location, { getElementById: () => anchor }, (callback: () => void) => callback());

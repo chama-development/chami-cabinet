@@ -4,7 +4,7 @@
 #   ./update.sh --base <тег>   (прогонит ./check-update.sh и пересоберёт overlay)
 # что выставляет BASE_TAG в .env; Dockerfile/git при этом НЕ меняются.
 ARG BASE_TAG=v0.8.2
-FROM ghcr.io/snoups/remnashop:${BASE_TAG}
+FROM ghcr.io/snoups/remnashop:${BASE_TAG} AS overlay-build
 
 # Патчи пакетов Alpine базового образа. Пин BASE_TAG выше решает, КАКОЙ базовый образ
 # берём; он не должен означать «оставаться с непропатченной ОС». Проверка по базе OSV
@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir --target=/opt/remnashop/.venv/lib/python3.12/site
 
 # Security updates are installed in-place in the upstream uv-managed venv.
 # Keep the application framework pins; update vulnerable runtime dependencies.
-RUN pip install --no-cache-dir --upgrade "pip==26.2.0"
+RUN pip install --no-cache-dir --upgrade "pip==26.2.2"
 RUN pip --python /opt/remnashop/.venv/bin/python install --no-cache-dir --upgrade \
       "fastapi==0.140.0" \
       "starlette==1.3.1" \
@@ -38,7 +38,7 @@ RUN pip --python /opt/remnashop/.venv/bin/python install --no-cache-dir --upgrad
       "idna==3.18" \
       "python-dotenv==1.2.2" \
       "PyJWT==2.15.1" \
-      "certifi==2026.10.18" \
+      "certifi==2026.10.23" \
       "anyio==4.14.2" \
       "dnspython==2.9.0" \
       "multidict==6.9.1"
@@ -94,3 +94,13 @@ COPY CHANGELOG.md /opt/remnashop/CHANGELOG.md
 # же, как в базовом образе. Он зовёт `src.__main__:application`, а эта фабрика сама
 # отдаёт кабинет — см. admin_src/overlay_patches/entrypoint.py. Раньше здесь стоял
 # sed по строке запуска, то есть сборка меняла файл бота.
+
+# CI needs an installer for isolated pytest dependencies. Keep that tooling in an
+# explicit test target, never in the default production image.
+FROM overlay-build AS test
+
+FROM overlay-build AS runtime
+# pip bundles its own urllib3/msgpack/setuptools copies; updating application
+# packages cannot patch those private copies. The running application needs no
+# package installer, so remove it (and its bundled libraries) after the build.
+RUN /usr/local/bin/python -m pip uninstall -y pip
